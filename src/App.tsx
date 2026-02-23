@@ -15,9 +15,16 @@ import {
   Home, 
   Utensils, 
   Type as TypeIcon,
-  AlertCircle
+  AlertCircle,
+  User as UserIcon,
+  Users
 } from 'lucide-react';
 import { exercises, Exercise, Question } from './data';
+
+interface User {
+  name: string;
+  group: string;
+}
 
 const ExerciseIcon = ({ id }: { id: string }) => {
   if (id.includes('vocab')) return <BookOpen className="w-5 h-5" />;
@@ -28,12 +35,23 @@ const ExerciseIcon = ({ id }: { id: string }) => {
 };
 
 export default function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loginName, setLoginName] = useState('');
+  const [loginGroup, setLoginGroup] = useState('');
+  
   const [activeExerciseId, setActiveExerciseId] = useState(exercises[0].id);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const [showResults, setShowResults] = useState(false);
   const [score, setScore] = useState(0);
 
   const activeExercise = exercises.find(e => e.id === activeExerciseId)!;
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loginName.trim() && loginGroup.trim()) {
+      setUser({ name: loginName, group: loginGroup });
+    }
+  };
 
   const handleAnswerChange = (questionId: string, value: string | string[]) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
@@ -71,6 +89,63 @@ export default function App() {
     resetQuiz();
   }, [activeExerciseId]);
 
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center p-6">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white p-10 rounded-3xl shadow-xl border border-black/5 w-full max-w-md"
+        >
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 mb-4">
+              <Trophy className="w-8 h-8" />
+            </div>
+            <h1 className="text-3xl font-medium tracking-tight">Welcome</h1>
+            <p className="text-gray-500 mt-2">Please enter your details to start</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <UserIcon className="w-4 h-4" /> Full Name
+              </label>
+              <input
+                type="text"
+                required
+                value={loginName}
+                onChange={(e) => setLoginName(e.target.value)}
+                placeholder="John Doe"
+                className="w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                <Users className="w-4 h-4" /> Group Number
+              </label>
+              <input
+                type="text"
+                required
+                value={loginGroup}
+                onChange={(e) => setLoginGroup(e.target.value)}
+                placeholder="e.g. 201"
+                className="w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-[#1A1A1A] text-white py-4 rounded-xl font-medium hover:bg-black transition-all shadow-lg shadow-black/10"
+            >
+              Start Testing
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F5F5] text-[#1A1A1A] font-sans flex">
       {/* Sidebar */}
@@ -80,7 +155,11 @@ export default function App() {
             <Trophy className="text-emerald-500" />
             Self-Test App
           </h1>
-          <p className="text-xs text-gray-500 mt-2 uppercase tracking-wider font-mono">English Practice 3b</p>
+          <div className="mt-4 p-3 bg-gray-50 rounded-xl border border-black/5">
+            <p className="text-sm font-medium truncate">{user.name}</p>
+            <p className="text-xs text-gray-500">Group: {user.group}</p>
+          </div>
+          <p className="text-xs text-gray-500 mt-4 uppercase tracking-wider font-mono">English Practice 3b</p>
         </div>
         
         <nav className="flex-1 overflow-y-auto p-4 space-y-1">
@@ -233,13 +312,6 @@ export default function App() {
                     <p className="text-lg font-medium">out of {activeExercise.questions.length}</p>
                   </div>
                 </div>
-                <button
-                  onClick={resetQuiz}
-                  className="bg-white border border-gray-200 text-gray-600 px-8 py-4 rounded-xl font-medium hover:bg-gray-50 transition-all flex items-center gap-2"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  Try Again
-                </button>
               </div>
             )}
           </footer>
